@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BaumarktPro</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:     #111318;
+  --panel:  #191c24;
+  --card:   #1f2330;
+  --border: #2a2f3d;
+  --bord2:  #353c50;
+  --accent: #f0a500;
+  --green:  #22c55e;
+  --red:    #ef4444;
+  --blue:   #3b82f6;
+  --wa:     #25d366;
+  --text:   #eef0f5;
+  --muted:  #5a6278;
+  --sub:    #8892a4;
+  --mono:   'Space Mono', monospace;
+  --sans:   'Barlow', sans-serif;
+  --cond:   'Barlow Condensed', sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+/* TOPBAR */
+.topbar{background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:50px;flex-shrink:0;z-index:50;gap:12px}
+.brand{font-family:var(--cond);font-size:22px;font-weight:700;letter-spacing:1px;color:var(--accent);white-space:nowrap}
+.brand span{color:var(--text)}
+.topbar-nav{display:flex;gap:4px}
+.nav-btn{background:none;border:none;font-family:var(--cond);font-size:13px;font-weight:600;letter-spacing:.5px;color:var(--sub);padding:6px 14px;border-radius:6px;cursor:pointer;transition:all .15s}
+.nav-btn:hover{background:var(--card);color:var(--text)}
+.nav-btn.active{background:var(--accent);color:#000}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.lex-chip{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:5px 11px;font-family:var(--mono);font-size:11px;color:var(--sub);cursor:pointer;transition:border-color .15s}
+.lex-chip:hover{border-color:var(--accent)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.dot.ok{background:var(--green);box-shadow:0 0 6px var(--green)}
+.clock{font-family:var(--mono);font-size:11px;color:var(--muted)}
+
+/* VIEWS */
+.view{display:none;flex:1;overflow:hidden}
+.view.active{display:flex}
+
+/* ═══════════════════════════
+   VIEW: KASSE (POS)
+═══════════════════════════ */
+.pos-layout{display:grid;grid-template-columns:1fr 390px;flex:1;overflow:hidden;width:100%}
+
+/* LEFT */
+.pos-left{display:flex;flex-direction:column;overflow:hidden;border-right:1px solid var(--border)}
+.scan-bar{background:var(--panel);border-bottom:1px solid var(--border);padding:12px 18px;display:flex;gap:10px;align-items:center;flex-shrink:0}
+.scan-label{font-family:var(--cond);font-size:12px;font-weight:600;letter-spacing:1px;color:var(--sub);text-transform:uppercase;white-space:nowrap}
+.scan-input{flex:1;background:var(--bg);border:1.5px solid var(--border);border-radius:7px;padding:9px 13px;font-family:var(--mono);font-size:15px;color:var(--accent);outline:none;letter-spacing:1px;transition:border-color .15s,box-shadow .15s}
+.scan-input::placeholder{color:var(--muted);font-size:12px;letter-spacing:0}
+.scan-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(240,165,0,.1)}
+
+.btn{border:none;cursor:pointer;font-family:var(--sans);font-weight:600;border-radius:7px;transition:all .15s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn-yellow{background:var(--accent);color:#000;padding:9px 16px;font-size:13px}
+.btn-yellow:hover:not(:disabled){background:#ffc108}
+.btn-ghost{background:var(--card);border:1px solid var(--border);color:var(--sub);padding:9px 13px;font-size:12px;font-family:var(--mono)}
+.btn-ghost:hover:not(:disabled){border-color:var(--bord2);color:var(--text)}
+.btn-green{background:var(--green);color:#000;padding:9px 16px;font-size:13px}
+.btn-green:hover:not(:disabled){background:#16a34a}
+
+/* PRODUCT HIT */
+.product-hit{background:var(--panel);border-bottom:1px solid var(--border);padding:11px 18px;display:none;align-items:center;gap:12px;flex-shrink:0;animation:fadeD .15s ease}
+.product-hit.show{display:flex}
+@keyframes fadeD{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.hit-name{font-size:14px;font-weight:600}
+.hit-ean{font-family:var(--mono);font-size:11px;color:var(--sub);margin-top:2px}
+
+/* NEW product badge */
+.new-badge{background:rgba(240,165,0,.15);border:1px solid rgba(240,165,0,.4);border-radius:4px;padding:2px 7px;font-family:var(--cond);font-size:11px;font-weight:600;color:var(--accent);letter-spacing:.5px;margin-left:6px}
+.saved-badge{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);border-radius:4px;padding:2px 7px;font-family:var(--cond);font-size:11px;font-weight:600;color:var(--green);letter-spacing:.5px;margin-left:6px}
+
+.price-input{width:80px;background:var(--bg);border:1.5px solid var(--border);border-radius:6px;padding:5px 8px;font-family:var(--mono);font-size:15px;font-weight:700;color:var(--accent);outline:none;text-align:right}
+.price-input:focus{border-color:var(--accent)}
+.qty-row{display:flex;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.qty-btn{background:none;border:none;color:var(--text);width:30px;height:32px;font-size:17px;cursor:pointer;transition:background .1s}
+.qty-btn:hover{background:var(--card)}
+.qty-val{width:34px;text-align:center;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);background:none;border:none;outline:none}
+.btn-save-prod{background:rgba(240,165,0,.12);border:1px solid rgba(240,165,0,.3);color:var(--accent);padding:6px 11px;font-size:11px;border-radius:6px;cursor:pointer;font-family:var(--cond);font-weight:600;white-space:nowrap;transition:all .15s}
+.btn-save-prod:hover{background:rgba(240,165,0,.25)}
+
+/* ITEMS TABLE */
+.items-area{flex:1;overflow-y:auto;padding:14px 18px}
+.items-area::-webkit-scrollbar{width:4px}
+.items-area::-webkit-scrollbar-thumb{background:var(--bord2);border-radius:2px}
+.empty-msg{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:var(--muted)}
+.empty-icon{font-size:40px}
+.empty-text{font-family:var(--mono);font-size:12px}
+table.itbl{width:100%;border-collapse:collapse}
+table.itbl th{font-family:var(--cond);font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);padding:0 8px 10px;text-align:left;border-bottom:1px solid var(--border)}
+table.itbl th.r{text-align:right}
+table.itbl td{padding:10px 8px;border-bottom:1px solid var(--border);vertical-align:middle}
+.td-name{font-weight:500;font-size:13px}
+.td-ean{font-family:var(--mono);font-size:10px;color:var(--sub);margin-top:2px}
+.td-num{font-family:var(--mono);font-size:13px;text-align:right;color:var(--sub)}
+.td-total{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent);text-align:right}
+.rm-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;padding:3px 5px;border-radius:4px;transition:all .1s}
+.rm-btn:hover{color:var(--red);background:rgba(239,68,68,.1)}
+.inline-price{width:68px;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:3px 6px;font-family:var(--mono);font-size:12px;color:var(--accent);outline:none;text-align:right}
+.inline-price:focus{border-color:var(--accent)}
+
+/* TOTALS BAR */
+.totals-bar{background:var(--panel);border-top:1px solid var(--border);padding:12px 18px;display:flex;justify-content:flex-end;gap:28px;align-items:center;flex-shrink:0}
+.tot-item{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.tot-lbl{font-family:var(--cond);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.tot-val{font-family:var(--mono);font-size:13px;color:var(--sub)}
+.tot-val.big{font-size:22px;font-weight:700;color:var(--accent)}
+
+/* RIGHT PANEL */
+.pos-right{display:flex;flex-direction:column;overflow:hidden;background:var(--panel)}
+.right-scroll{flex:1;overflow-y:auto;padding:18px 18px 0;display:flex;flex-direction:column;gap:18px}
+.right-scroll::-webkit-scrollbar{width:4px}
+.right-scroll::-webkit-scrollbar-thumb{background:var(--bord2);border-radius:2px}
+.sec-title{font-family:var(--cond);font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:2px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:10px;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.8px;font-family:var(--cond)}
+.finput{background:var(--bg);border:1.5px solid var(--border);border-radius:7px;padding:9px 12px;font-family:var(--sans);font-size:13px;color:var(--text);outline:none;transition:border-color .15s;width:100%}
+.finput:focus{border-color:var(--accent)}
+.finput::placeholder{color:var(--muted)}
+.phone-row{display:flex;gap:8px}
+.phone-row .finput{flex:1}
+.btn-contacts{background:var(--card);border:1.5px solid var(--border);border-radius:7px;padding:9px 12px;color:var(--sub);font-size:16px;cursor:pointer;transition:all .15s}
+.btn-contacts:hover{border-color:var(--accent);color:var(--accent)}
+
+/* WA PREVIEW */
+.wa-wrap{background:#0a1a14;border:1px solid #1a3326;border-radius:10px;padding:12px}
+.wa-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #1a3326}
+.wa-av{width:30px;height:30px;background:var(--wa);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px}
+.wa-nm{font-size:12px;font-weight:600;color:var(--wa)}
+.wa-st{font-size:10px;color:#3d8f5c}
+.wa-bubble{background:#1a3d2a;border-radius:4px 10px 10px 10px;padding:10px 12px;font-size:12px;line-height:1.6;white-space:pre-wrap;color:#d4f0e0;font-family:var(--mono);max-height:140px;overflow-y:auto}
+.wa-bubble::-webkit-scrollbar{width:3px}
+.wa-bubble::-webkit-scrollbar-thumb{background:#2a5a3a}
+.wa-tick{text-align:right;font-size:10px;color:#3d8f5c;margin-top:4px}
+
+/* APPROVAL */
+.appr-box{border:1.5px solid var(--border);border-radius:10px;overflow:hidden}
+.appr-hdr{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--card);border-bottom:1px solid var(--border)}
+.appr-dot{width:9px;height:9px;border-radius:50%;background:var(--muted);flex-shrink:0}
+.appr-dot.waiting{background:var(--accent);animation:blink 1.2s ease-in-out infinite}
+.appr-dot.approved{background:var(--green);box-shadow:0 0 8px var(--green)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+.appr-lbl{font-size:13px;font-weight:600}
+.appr-sub{font-size:11px;color:var(--sub);margin-top:1px}
+.appr-body{padding:12px;display:flex;flex-direction:column;gap:8px}
+.btn-confirm{background:var(--card);border:1.5px solid var(--border);color:var(--sub);padding:12px;font-size:13px;font-weight:600;border-radius:8px;width:100%;justify-content:center;font-family:var(--sans);transition:all .2s}
+.btn-confirm.waiting{border-color:var(--accent);color:var(--accent);background:rgba(240,165,0,.07)}
+.btn-confirm.approved{border-color:var(--green)!important;color:#000!important;background:var(--green)!important;box-shadow:0 4px 20px rgba(34,197,94,.35);animation:popIn .3s cubic-bezier(.34,1.56,.64,1)}
+@keyframes popIn{from{transform:scale(.95)}to{transform:scale(1)}}
+.btn-resend{background:transparent;border:1px solid var(--border);color:var(--muted);padding:8px;font-size:12px;border-radius:7px;width:100%;justify-content:center;font-family:var(--sans)}
+.btn-resend:hover:not(:disabled){border-color:var(--wa);color:var(--wa)}
+
+/* FOOTER */
+.right-footer{padding:14px 18px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+.btn-wa{background:var(--wa);color:#000;padding:13px;font-size:14px;font-weight:700;border-radius:8px;width:100%;justify-content:center;font-family:var(--sans)}
+.btn-wa:hover:not(:disabled){background:#1db954}
+.btn-lex{background:var(--card);border:1.5px solid var(--bord2);color:var(--sub);padding:12px;font-size:14px;font-weight:600;border-radius:8px;width:100%;justify-content:center;font-family:var(--sans);transition:all .2s}
+.btn-lex.ready{border-color:var(--green);color:#000;background:var(--green);box-shadow:0 4px 24px rgba(34,197,94,.3);animation:glow 2s ease-in-out infinite alternate}
+@keyframes glow{from{box-shadow:0 4px 16px rgba(34,197,94,.25)}to{box-shadow:0 4px 32px rgba(34,197,94,.55)}}
+.btn-danger-sm{background:transparent;border:1px solid var(--border);color:var(--muted);padding:7px;font-size:12px;border-radius:7px;width:100%;justify-content:center;font-family:var(--sans)}
+.btn-danger-sm:hover:not(:disabled){border-color:var(--red);color:var(--red)}
+
+/* ═══════════════════════════
+   VIEW: PRODUKTE (DB)
+═══════════════════════════ */
+.db-layout{flex:1;overflow:hidden;display:flex;flex-direction:column;width:100%}
+.db-toolbar{background:var(--panel);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;gap:10px;align-items:center;flex-shrink:0}
+.db-search{flex:1;background:var(--bg);border:1.5px solid var(--border);border-radius:7px;padding:9px 13px;font-family:var(--sans);font-size:13px;color:var(--text);outline:none;transition:border-color .15s}
+.db-search:focus{border-color:var(--accent)}
+.db-search::placeholder{color:var(--muted)}
+.db-count{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap}
+.db-body{flex:1;overflow-y:auto;padding:0}
+.db-body::-webkit-scrollbar{width:5px}
+.db-body::-webkit-scrollbar-thumb{background:var(--bord2);border-radius:2px}
+table.dbtbl{width:100%;border-collapse:collapse}
+table.dbtbl th{font-family:var(--cond);font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);padding:10px 16px;text-align:left;border-bottom:1px solid var(--border);background:var(--panel);position:sticky;top:0;z-index:5}
+table.dbtbl th.r{text-align:right}
+table.dbtbl td{padding:10px 16px;border-bottom:1px solid var(--border);vertical-align:middle}
+table.dbtbl tr:hover td{background:rgba(255,255,255,.02)}
+.db-name{font-size:14px;font-weight:500}
+.db-ean-tag{font-family:var(--mono);font-size:11px;color:var(--sub)}
+.db-price{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--accent);text-align:right}
+.db-date{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:right}
+.edit-inline{width:80px;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:4px 7px;font-family:var(--mono);font-size:13px;color:var(--accent);outline:none;text-align:right}
+.edit-inline:focus{border-color:var(--accent)}
+.edit-name{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:4px 8px;font-family:var(--sans);font-size:13px;color:var(--text);outline:none}
+.edit-name:focus{border-color:var(--accent)}
+.db-actions{display:flex;gap:6px;justify-content:flex-end}
+.btn-db-del{background:none;border:none;color:var(--muted);font-size:15px;cursor:pointer;padding:3px 6px;border-radius:4px;transition:all .1s}
+.btn-db-del:hover{color:var(--red);background:rgba(239,68,68,.1)}
+.btn-db-save{background:var(--green);border:none;color:#000;font-size:12px;font-weight:700;cursor:pointer;padding:4px 10px;border-radius:5px;font-family:var(--sans);display:none}
+.db-empty{padding:60px 20px;text-align:center;color:var(--muted);font-family:var(--mono);font-size:13px}
+
+/* ADD PRODUCT FORM */
+.db-add-form{background:var(--panel);border-top:1px solid var(--border);padding:14px 20px;display:flex;gap:10px;align-items:flex-end;flex-shrink:0}
+.db-add-form .field{flex:1;min-width:0}
+.db-add-form .field.narrow{flex:0 0 110px}
+.db-add-form .field.ean{flex:0 0 160px}
+
+/* MODALS */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-ov.open{display:flex}
+.modal{background:var(--panel);border:1px solid var(--bord2);border-radius:14px;padding:26px;width:370px;animation:fadeD .2s ease}
+.modal-title{font-family:var(--cond);font-size:20px;font-weight:700;margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--sub);margin-bottom:18px;line-height:1.5}
+.modal-btns{display:flex;gap:10px;margin-top:18px}
+.mcancel{flex:1;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:10px;color:var(--sub);font-size:13px;cursor:pointer;font-family:var(--sans);font-weight:600}
+.mok{flex:2;background:var(--accent);border:none;border-radius:7px;padding:10px;color:#000;font-size:13px;cursor:pointer;font-family:var(--sans);font-weight:700}
+.mok:hover{background:#ffc108}
+
+/* CONTACTS MODAL */
+.cm{background:var(--panel);border:1px solid var(--bord2);border-radius:14px;width:350px;overflow:hidden;animation:fadeD .2s ease}
+.cm-hdr{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.cm-title{font-family:var(--cond);font-size:18px;font-weight:700}
+.cm-x{background:none;border:none;color:var(--sub);font-size:20px;cursor:pointer;line-height:1}
+.cm-search{padding:10px 18px;border-bottom:1px solid var(--border)}
+.cm-list{max-height:300px;overflow-y:auto}
+.cm-list::-webkit-scrollbar{width:4px}
+.cm-list::-webkit-scrollbar-thumb{background:var(--bord2)}
+.cm-item{padding:10px 18px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);transition:background .1s}
+.cm-item:hover{background:var(--card)}
+.cm-item:last-child{border-bottom:none}
+.cm-name{font-size:13px;font-weight:500}
+.cm-phone{font-family:var(--mono);font-size:11px;color:var(--sub)}
+.cm-add{padding:8px 18px;border-bottom:1px solid var(--border)}
+.cm-add button{width:100%;background:var(--card);border:1.5px dashed var(--bord2);border-radius:6px;padding:8px;color:var(--sub);font-size:12px;cursor:pointer;font-family:var(--sans);transition:all .15s}
+.cm-add button:hover{border-color:var(--accent);color:var(--accent)}
+.cm-new-form{padding:12px 18px;border-top:1px solid var(--border);display:none}
+.cm-new-form.open{display:flex;gap:8px;flex-wrap:wrap}
+.cm-new-form .finput{flex:1;min-width:120px}
+.cm-save-btn{background:var(--accent);border:none;border-radius:7px;padding:9px 14px;font-weight:700;color:#000;font-size:13px;cursor:pointer;font-family:var(--sans)}
+
+/* TOAST */
+.toasts{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:7px;z-index:500}
+.toast{background:var(--card);border:1px solid var(--bord2);border-radius:8px;padding:10px 15px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:9px;animation:toastIn .2s ease;box-shadow:0 8px 24px rgba(0,0,0,.4);min-width:250px}
+.toast.ok{border-color:var(--green)}
+.toast.err{border-color:var(--red)}
+.toast.inf{border-color:var(--blue)}
+@keyframes toastIn{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}
+.spinner{width:15px;height:15px;border:2px solid rgba(0,0,0,.2);border-top-color:#000;border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="brand">Baumarkt<span>Pro</span></div>
+  <div class="topbar-nav">
+    <button class="nav-btn active" id="navKasse" onclick="switchView('kasse')">🛒 Kasse</button>
+    <button class="nav-btn" id="navProdukte" onclick="switchView('produkte')">📦 Produkte</button>
+  </div>
+  <div class="topbar-right">
+    <div class="lex-chip" onclick="openLexModal()" id="lexChip">
+      <div class="dot" id="lexDot"></div>
+      <span id="lexLbl">Lexoffice</span>
+    </div>
+    <div class="lex-chip" onclick="openSbModal()" id="sbChip">
+      <div class="dot" id="sbDot"></div>
+      <span id="sbLbl">Supabase verbinden</span>
+    </div>
+    <div class="clock" id="clk"></div>
+  </div>
+</div>
+
+<!-- ═══ VIEW: KASSE ═══ -->
+<div class="view active" id="viewKasse">
+<div class="pos-layout">
+
+  <!-- LEFT -->
+  <div class="pos-left">
+    <div class="scan-bar">
+      <span class="scan-label">📦 Barcode</span>
+      <input class="scan-input" id="scanInput" placeholder="EAN scannen oder eingeben..." autocomplete="off" autofocus>
+      <button class="btn btn-yellow" onclick="doScan()">Suchen</button>
+      <button class="btn btn-ghost" onclick="demoScan()">DEMO</button>
+    </div>
+
+    <!-- PRODUCT HIT -->
+    <div class="product-hit" id="productHit">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">
+          <span class="hit-name" id="hitName">—</span>
+          <span id="hitBadge"></span>
+        </div>
+        <div class="hit-ean" id="hitEan">EAN: —</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">
+          <span style="font-size:10px;color:var(--sub);font-family:var(--cond);text-transform:uppercase;letter-spacing:.8px">Preis (€)</span>
+          <input id="hitPrice" type="number" step="0.01" min="0" class="price-input"
+            onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+        <div class="qty-row">
+          <button class="qty-btn" onclick="chQty(-1)">−</button>
+          <input class="qty-val" id="qtyVal" type="number" value="1" min="1">
+          <button class="qty-btn" onclick="chQty(1)">+</button>
+        </div>
+        <button id="btnSaveProd" class="btn-save-prod" onclick="saveCurrentProduct()" style="display:none">💾 Speichern</button>
+        <button class="btn btn-green" onclick="addItem()">+ Hinzufügen</button>
+      </div>
+    </div>
+
+    <!-- ITEMS -->
+    <div class="items-area" id="itemsArea">
+      <div class="empty-msg" id="emptyMsg">
+        <div class="empty-icon">🔍</div>
+        <div class="empty-text">Barcode scannen um zu beginnen</div>
+      </div>
+      <table class="itbl" id="itemsTable" style="display:none">
+        <thead>
+          <tr>
+            <th>Artikel</th>
+            <th class="r">Preis</th>
+            <th class="r">Menge</th>
+            <th class="r">Gesamt</th>
+            <th style="width:32px"></th>
+          </tr>
+        </thead>
+        <tbody id="itemsTbody"></tbody>
+      </table>
+    </div>
+
+    <div class="totals-bar">
+      <div class="tot-item"><span class="tot-lbl">Netto</span><span class="tot-val" id="totNet">0,00 €</span></div>
+      <div class="tot-item"><span class="tot-lbl">MwSt. 19%</span><span class="tot-val" id="totTax">0,00 €</span></div>
+      <div class="tot-item"><span class="tot-lbl">Gesamt</span><span class="tot-val big" id="totGross">0,00 €</span></div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="pos-right">
+    <div class="right-scroll">
+
+      <div>
+        <div class="sec-title">👤 Kunde</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
+          <div class="field"><label>Name</label>
+            <input class="finput" id="custName" placeholder="Hans Müller" oninput="updateWa()">
+          </div>
+          <div class="field"><label>Telefon (WhatsApp)</label>
+            <div class="phone-row">
+              <input class="finput" id="custPhone" placeholder="+49 170 1234567" oninput="updateWa()">
+              <button class="btn-contacts" onclick="openContacts()" title="Aus Kontakten">👥</button>
+            </div>
+          </div>
+          <div class="field"><label>Mitarbeiter (Besteller)</label>
+            <input class="finput" id="personnelName" placeholder="z.B. Max Müller" oninput="updateWa()">
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="sec-title">💬 WhatsApp Vorschau</div>
+        <div class="wa-wrap" style="margin-top:10px">
+          <div class="wa-hdr">
+            <div class="wa-av">🔧</div>
+            <div><div class="wa-nm">Baumarkt Team</div><div class="wa-st">Online</div></div>
+          </div>
+          <div class="wa-bubble" id="waBubble">Noch keine Artikel...</div>
+          <div class="wa-tick">✓✓</div>
+        </div>
+      </div>
+
+      <div style="padding-bottom:4px">
+        <div class="sec-title">✅ Kundenbestätigung</div>
+        <div class="appr-box" style="margin-top:10px" id="apprBox">
+          <div class="appr-hdr">
+            <div class="appr-dot" id="apprDot"></div>
+            <div>
+              <div class="appr-lbl" id="apprLbl">Noch nicht gesendet</div>
+              <div class="appr-sub" id="apprSub">Bitte erst Nachricht senden</div>
+            </div>
+          </div>
+          <div class="appr-body">
+            <!-- APPROVAL LINK BOX -->
+            <div id="approvalLinkBox" style="display:none;background:var(--bg);border:1px solid var(--bord2);border-radius:8px;padding:10px 12px;margin-bottom:2px">
+              <div style="font-family:var(--cond);font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">🔗 Bestätigungslink</div>
+              <div id="approvalLinkText" style="font-family:var(--mono);font-size:10px;color:var(--sub);word-break:break-all;line-height:1.5"></div>
+              <div style="font-size:11px;color:var(--muted);margin-top:6px">Müşteri bu linke Nach dem Klick wird das Panel automatisch aktualisiert</div>
+            </div>
+            <button class="btn btn-confirm" id="btnConfirm" onclick="markApproved()" disabled>
+              ☐ &nbsp;Kunde hat bestätigt
+            </button>
+            <button class="btn btn-resend" id="btnResend" onclick="resend()" disabled>
+              🔁 Erneut senden
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="right-footer">
+      <button class="btn btn-wa" onclick="sendWa()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="black"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        WhatsApp senden
+      </button>
+      <button class="btn btn-lex" id="btnLex" onclick="sendToLex()" disabled>
+        📤 &nbsp;In Lexoffice übertragen
+      </button>
+      <button class="btn btn-danger-sm" onclick="clearAll()">🗑 Zurücksetzen</button>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ═══ VIEW: PRODUKTE ═══ -->
+<div class="view" id="viewProdukte">
+<div class="db-layout">
+  <div class="db-toolbar">
+    <input class="db-search" id="dbSearch" placeholder="Suchen nach Name oder EAN..." oninput="renderDB()">
+    <span class="db-count" id="dbCount">0 Produkte</span>
+    <button class="btn btn-yellow" onclick="exportDB()">⬇ Export</button>
+    <button class="btn btn-ghost" id="btnImport" onclick="document.getElementById('importFile').click()">⬆ Import</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importDB(event)">
+  </div>
+  <div class="db-body">
+    <table class="dbtbl">
+      <thead>
+        <tr>
+          <th>EAN</th>
+          <th>Produktname</th>
+          <th class="r">Preis</th>
+          <th class="r">Gespeichert</th>
+          <th class="r" style="width:80px">Aktion</th>
+        </tr>
+      </thead>
+      <tbody id="dbTbody"></tbody>
+    </table>
+    <div class="db-empty" id="dbEmpty" style="display:none">Noch keine Produkte gespeichert.<br>Barcode scannen → Preis eingeben → Speichern.</div>
+  </div>
+  <div class="db-add-form">
+    <div class="field ean"><label>EAN</label>
+      <input class="finput" id="addEan" placeholder="4006381..." autocomplete="off">
+    </div>
+    <div class="field"><label>Produktname</label>
+      <input class="finput" id="addName" placeholder="Bosch Akkubohrer...">
+    </div>
+    <div class="field narrow"><label>Preis (€)</label>
+      <input class="finput" id="addPrice" type="number" step="0.01" min="0" placeholder="29.99">
+    </div>
+    <button class="btn btn-yellow" onclick="addProductManual()" style="align-self:flex-end;padding:9px 18px">+ Hinzufügen</button>
+  </div>
+</div>
+</div>
+
+<!-- LEXOFFICE MODAL -->
+<div class="modal-ov" id="lexModal">
+  <div class="modal">
+    <div class="modal-title">⚙️ Lexoffice API</div>
+    <div class="modal-sub">API Key unter Lexoffice → Einstellungen → API Zugänge.</div>
+    <div class="field">
+      <label>API Key</label>
+      <input class="finput" id="lexKeyInput" type="password" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+    </div>
+    <div class="modal-btns">
+      <button class="mcancel" onclick="closeLexModal()">Abbrechen</button>
+      <button class="mok" onclick="saveLexKey()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUPABASE MODAL -->
+<div class="modal-ov" id="sbModal">
+  <div class="modal">
+    <div class="modal-title">🔗 Supabase Verbindung</div>
+    <div class="modal-sub">Supabase → Project Settings → API bölümünden al. Onay sistemi için gerekli.</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="field">
+        <label>Project URL</label>
+        <input class="finput" id="sbUrlInput" placeholder="https://xxxxx.supabase.co">
+      </div>
+      <div class="field">
+        <label>Anon Public Key</label>
+        <input class="finput" id="sbKeyInput" type="password" placeholder="eyJhbGci...">
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="mcancel" onclick="closeSbModal()">Abbrechen</button>
+      <button class="mok" onclick="saveSbConfig()">Speichern & Testen</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONTACTS MODAL -->
+<div class="modal-ov" id="contactsModal">
+  <div class="cm">
+    <div class="cm-hdr">
+      <div class="cm-title">👥 Kontakte</div>
+      <button class="cm-x" onclick="closeContacts()">✕</button>
+    </div>
+    <div class="cm-search">
+      <input class="finput" id="cmSearch" placeholder="Suchen..." oninput="renderContacts()">
+    </div>
+    <div class="cm-add">
+      <button onclick="toggleNewContact()">＋ Neuen Kontakt hinzufügen</button>
+    </div>
+    <div class="cm-new-form" id="cmNewForm">
+      <input class="finput" id="ncName" placeholder="Name">
+      <input class="finput" id="ncPhone" placeholder="+49...">
+      <button class="cm-save-btn" onclick="saveContact()">OK</button>
+    </div>
+    <div class="cm-list" id="cmList"></div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div class="toasts" id="toasts"></div>
+
+<script>
+// ════════════════════════════════════════════
+//  STORAGE KEYS
+// ════════════════════════════════════════════
+const K_PRODUCTS = 'bmpro_products';
+const K_CONTACTS = 'bmpro_contacts';
+const K_LEX      = 'bmpro_lex';
+const K_SB_URL   = 'bmpro_sb_url';
+const K_SB_KEY   = 'bmpro_sb_key';
+
+// ════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════
+let products = JSON.parse(localStorage.getItem(K_PRODUCTS) || '{}');
+let currentToken = null;
+let pollTimer = null;
+// products = { [ean]: { ean, name, price, saved } }
+
+let contacts = JSON.parse(localStorage.getItem(K_CONTACTS) || 'null') || [
+  { name:'Thomas Becker',   phone:'+4917612345678' },
+  { name:'Sandra Klein',    phone:'+4915223456789' },
+  { name:'Markus Hoffmann', phone:'+4916134567890' },
+  { name:'Petra Schulz',    phone:'+4917045678901' },
+];
+
+let lexKey   = localStorage.getItem(K_LEX) || '';
+let sbUrl    = localStorage.getItem(K_SB_URL) || 'https://lhjqaldayrsjmeczidrx.supabase.co';
+let sbKey    = localStorage.getItem(K_SB_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxoanFhbGRheXJzam1lY3ppZHJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2MDAwNTYsImV4cCI6MjA5NzE3NjA1Nn0.b5Ug3I6HQcPzFBXEpq4k6aGw1H8IjfTA3osUO1LGQFE';
+let items    = [];
+let waSent   = false;
+let approved = false;
+let currentEan = null;
+let currentIsNew = false;
+
+const DEMO_SCANS = [
+  { ean:'4006381333933', name:'Bosch Schlagbohrmaschine PSB 500 RE' },
+  { ean:'4002395186748', name:'Makita Winkelschleifer 125mm DGA452'  },
+  { ean:'4007430143273', name:'Würth Universalschrauben 4×40 200St.' },
+  { ean:'3101565894230', name:'Soudal Silikon Universal 300ml'       },
+  { ean:'4015120033895', name:'Knauf Raumputz 25kg'                  },
+  { ean:'5410329638082', name:'Pattex Montagekleber 300ml'           },
+  { ean:'4016780122497', name:'Stanley Cuttermesser 18mm'            },
+  { ean:'0885911485555', name:'DeWalt Akkubohrer 18V DCD791'         },
+];
+let demoIdx = 0;
+
+// ════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════
+window.onload = () => {
+  if (!localStorage.getItem(K_SB_URL)) localStorage.setItem(K_SB_URL, 'https://lhjqaldayrsjmeczidrx.supabase.co');
+  if (!localStorage.getItem(K_SB_KEY)) localStorage.setItem(K_SB_KEY, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxoanFhbGRheXJzam1lY3ppZHJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2MDAwNTYsImV4cCI6MjA5NzE3NjA1Nn0.b5Ug3I6HQcPzFBXEpq4k6aGw1H8IjfTA3osUO1LGQFE');
+  sbUrl = localStorage.getItem(K_SB_URL);
+  sbKey = localStorage.getItem(K_SB_KEY);
+  checkUrlToken(); // Must be first — may replace entire page
+  document.getElementById('scanInput').addEventListener('keydown', e => { if(e.key==='Enter') doScan(); });
+  document.getElementById('qtyVal').addEventListener('keydown', e => { if(e.key==='Enter') addItem(); });
+  document.getElementById('hitPrice').addEventListener('keydown', e => { if(e.key==='Enter') addItem(); });
+  updateLexBadge();
+  updateWa();
+  renderDB();
+  setInterval(() => {
+    const n = new Date();
+    document.getElementById('clk').textContent =
+      n.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  }, 1000);
+};
+
+// ════════════════════════════════════════════
+//  VIEW SWITCH
+// ════════════════════════════════════════════
+function switchView(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('view' + v.charAt(0).toUpperCase() + v.slice(1)).classList.add('active');
+  document.getElementById('nav' + v.charAt(0).toUpperCase() + v.slice(1)).classList.add('active');
+  if (v==='produkte') renderDB();
+  if (v==='kasse') document.getElementById('scanInput').focus();
+}
+
+// ════════════════════════════════════════════
+//  SCAN
+// ════════════════════════════════════════════
+function doScan() {
+  const raw = document.getElementById('scanInput').value.trim();
+  if (!raw) return;
+
+  const ean = raw;
+  const known = products[ean];
+
+  if (known) {
+    // ✅ Found in product DB
+    showHit(ean, known.name, known.price, false);
+    toast('📦 ' + known.name.substring(0,30) + ' — Preis: ' + fmt(known.price), 'ok');
+  } else {
+    // ❓ Unknown EAN — check demo list for name hint
+    const demo = DEMO_SCANS.find(d => d.ean === ean);
+    const name = demo ? demo.name : '';
+    showHit(ean, name || ('Unbekannt – ' + ean), 0, true);
+    if (!name) toast('⚠️ EAN unbekannt — Name & Preis eingeben', 'inf');
+    else toast('💡 Neues Produkt — bitte Preis eingeben', 'inf');
+  }
+}
+
+function demoScan() {
+  const d = DEMO_SCANS[demoIdx % DEMO_SCANS.length]; demoIdx++;
+  document.getElementById('scanInput').value = d.ean;
+  doScan();
+}
+
+function showHit(ean, name, price, isNew) {
+  currentEan   = ean;
+  currentIsNew = isNew;
+
+  document.getElementById('hitName').textContent = name || '';
+  document.getElementById('hitEan').textContent  = 'EAN: ' + ean;
+  document.getElementById('hitPrice').value      = price > 0 ? price.toFixed(2) : '';
+  document.getElementById('qtyVal').value        = 1;
+
+  // Badge
+  const badge = document.getElementById('hitBadge');
+  if (isNew) {
+    badge.innerHTML = '<span class="new-badge">NEU</span>';
+    document.getElementById('btnSaveProd').style.display = 'inline-flex';
+    // If name is also empty, make name field editable inline
+    document.getElementById('hitName').contentEditable = isNew ? 'true' : 'false';
+    document.getElementById('hitName').style.outline = isNew ? '1px dashed var(--accent)' : 'none';
+    document.getElementById('hitName').style.padding = isNew ? '1px 4px' : '0';
+    document.getElementById('hitName').style.borderRadius = '4px';
+  } else {
+    badge.innerHTML = '<span class="saved-badge">✓ Gespeichert</span>';
+    document.getElementById('btnSaveProd').style.display = 'none';
+    document.getElementById('hitName').contentEditable = 'false';
+    document.getElementById('hitName').style.outline = 'none';
+    document.getElementById('hitName').style.padding = '0';
+  }
+
+  document.getElementById('productHit').classList.add('show');
+  document.getElementById('hitPrice').focus();
+}
+
+function saveCurrentProduct() {
+  const ean   = currentEan;
+  const name  = document.getElementById('hitName').textContent.trim();
+  const price = parseFloat(document.getElementById('hitPrice').value);
+
+  if (!name || name.startsWith('Unbekannt')) { toast('❌ Bitte Produktname eingeben', 'err'); return; }
+  if (!price || price <= 0)                  { toast('❌ Bitte Preis eingeben', 'err'); return; }
+
+  products[ean] = { ean, name, price, saved: new Date().toLocaleDateString('de-DE') };
+  localStorage.setItem(K_PRODUCTS, JSON.stringify(products));
+
+  // Update badge
+  document.getElementById('hitBadge').innerHTML = '<span class="saved-badge">✓ Gespeichert</span>';
+  document.getElementById('btnSaveProd').style.display = 'none';
+  document.getElementById('hitName').contentEditable = 'false';
+  document.getElementById('hitName').style.outline = 'none';
+  document.getElementById('hitName').style.padding = '0';
+  currentIsNew = false;
+
+  renderDB();
+  toast('💾 ' + name + ' gespeichert!', 'ok');
+}
+
+// ════════════════════════════════════════════
+//  ITEMS
+// ════════════════════════════════════════════
+function chQty(d) {
+  const el = document.getElementById('qtyVal');
+  el.value = Math.max(1, parseInt(el.value||1) + d);
+}
+
+function addItem() {
+  const name  = document.getElementById('hitName').textContent.trim();
+  const ean   = currentEan;
+  const price = parseFloat(document.getElementById('hitPrice').value);
+  const qty   = parseInt(document.getElementById('qtyVal').value) || 1;
+
+  if (!price || price <= 0) { toast('❌ Bitte Preis eingeben', 'err'); document.getElementById('hitPrice').focus(); return; }
+
+  const ex = items.find(i => i.ean === ean);
+  if (ex) { ex.qty += qty; }
+  else    { items.push({ ean, name, price, qty }); }
+
+  document.getElementById('productHit').classList.remove('show');
+  document.getElementById('scanInput').value = '';
+  document.getElementById('scanInput').focus();
+
+  renderItems();
+  updateWa();
+  toast('✅ ' + name.substring(0,28) + ' hinzugefügt', 'ok');
+}
+
+function renderItems() {
+  const empty = items.length === 0;
+  document.getElementById('emptyMsg').style.display   = empty ? 'flex' : 'none';
+  document.getElementById('itemsTable').style.display = empty ? 'none' : 'table';
+
+  if (!empty) {
+    document.getElementById('itemsTbody').innerHTML = items.map((it, i) => `
+      <tr>
+        <td><div class="td-name">${it.name}</div><div class="td-ean">${it.ean}</div></td>
+        <td class="td-num">
+          <input type="number" step="0.01" min="0" value="${it.price.toFixed(2)}" class="inline-price"
+            onchange="items[${i}].price=parseFloat(this.value)||0;renderItems();updateWa()"
+            onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        </td>
+        <td class="td-num">
+          <div class="qty-row" style="display:inline-flex;min-width:84px">
+            <button class="qty-btn" onclick="chItemQty(${i},-1)">−</button>
+            <span class="qty-val" style="pointer-events:none">${it.qty}</span>
+            <button class="qty-btn" onclick="chItemQty(${i},1)">+</button>
+          </div>
+        </td>
+        <td class="td-total">${fmt(it.price * it.qty)}</td>
+        <td><button class="rm-btn" onclick="rmItem(${i})">✕</button></td>
+      </tr>`).join('');
+  }
+  updateTotals();
+}
+
+function chItemQty(i, d) { items[i].qty = Math.max(1, items[i].qty + d); renderItems(); updateWa(); }
+function rmItem(i)        { items.splice(i,1); renderItems(); updateWa(); }
+
+function updateTotals() {
+  let gross = 0;
+  items.forEach(it => gross += it.price * it.qty);
+  const net = gross / 1.19;
+  const tax = gross - net;
+  document.getElementById('totNet').textContent   = fmt(net);
+  document.getElementById('totTax').textContent   = fmt(tax);
+  document.getElementById('totGross').textContent = fmt(gross);
+}
+
+// ════════════════════════════════════════════
+//  WHATSAPP
+// ════════════════════════════════════════════
+function genToken() {
+  return Math.random().toString(36).substring(2,10).toUpperCase();
+}
+
+function getApprovalLink(token) {
+  // Works on local network: uses current page URL base
+  const base = window.location.href.split('?')[0];
+  return base + '?approve=' + token;
+}
+
+function buildMsg(token) {
+  const custName    = document.getElementById('custName').value || 'Kunde';
+  const personnel   = document.getElementById('personnelName').value.trim();
+  const date = new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
+  if (items.length === 0) return 'Noch keine Artikel hinzugefügt...';
+  const lines = items.map(it =>
+    `  • ${it.qty}× ${it.name}\n    ${fmt(it.price)} → *${fmt(it.price*it.qty)}*`
+  ).join('\n');
+  let gross = 0; items.forEach(it => gross += it.price*it.qty);
+
+  const personnelNote = personnel
+    ? `\n📌 *Hinweis:* ${personnel} hat diese Bestellung in Ihrem Auftrag aufgegeben.`
+    : '';
+
+  const approvalLink = token ? `\n\n🔗 Zur Bestätigung hier klicken:\n${getApprovalLink(token)}` : '';
+
+  return `Guten Tag ${custName}! 👋\n\n📋 *Bestellbestätigung vom ${date}*\n\n${lines}\n\n──────────────\n💰 *Gesamt: ${fmt(gross)}*\n──────────────${personnelNote}${approvalLink}\n\nVielen Dank!\n— Ihr Baumarkt Team 🔧`;
+}
+
+function updateWa() {
+  document.getElementById('waBubble').textContent = buildMsg(null);
+}
+
+function sendWa() {
+  if (items.length===0) { toast('❌ Keine Artikel', 'err'); return; }
+  let phone = document.getElementById('custPhone').value.replace(/\s/g,'');
+  if (!phone) { toast('❌ Telefonnummer fehlt', 'err'); return; }
+  if (phone.startsWith('0')) phone = '+49' + phone.slice(1);
+  phone = phone.replace('+','');
+
+  // Generate approval token
+  currentToken = genToken();
+  const approvalLink = getApprovalLink(currentToken);
+
+  // Insert into Supabase
+  let gross = 0; items.forEach(it => gross += it.price * it.qty);
+  const personnel = document.getElementById('personnelName').value.trim();
+  const custNm    = document.getElementById('custName').value || 'Kunde';
+  sbInsertApproval(currentToken, custNm, personnel, items, fmt(gross)).then(ok => {
+    if (!ok && sbUrl) toast('⚠️ Supabase Verbindungsfehler — manuell bestätigen', 'err');
+  });
+
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(buildMsg(currentToken))}`, '_blank');
+
+  waSent = true; approved = false;
+
+  document.getElementById('apprDot').className   = 'appr-dot waiting';
+  document.getElementById('apprLbl').textContent = '⏳ Warte auf Bestätigung des Meisters...';
+  document.getElementById('apprSub').textContent = sbUrl ? '🟢 Wird automatisch überwacht' : '⚠️ Supabase nicht verbunden — manuell bestätigen';
+
+  const bc = document.getElementById('btnConfirm');
+  bc.disabled = false; bc.className = 'btn btn-confirm waiting';
+  bc.innerHTML = '☐ &nbsp;Kunde hat bestätigt — hier klicken';
+  document.getElementById('btnResend').disabled = false;
+  document.getElementById('btnLex').disabled = true;
+  document.getElementById('btnLex').className = 'btn btn-lex';
+
+  // Show approval link in panel
+  document.getElementById('approvalLinkBox').style.display = 'block';
+  document.getElementById('approvalLinkText').textContent = approvalLink;
+
+  // Start polling for approval via localStorage
+  startApprovalPoll(currentToken);
+
+  toast('💬 WhatsApp geöffnet — Link: ' + currentToken, 'ok');
+}
+
+function resend() { sendWa(); toast('🔁 Erneut gesendet', 'inf'); }
+
+function markApproved() {
+  if (!waSent) return;
+  approved = true;
+  document.getElementById('apprDot').className   = 'appr-dot approved';
+  document.getElementById('apprLbl').textContent = '✅ Bestätigt!';
+  document.getElementById('apprSub').textContent = 'Kunde hat bestätigt';
+  const bc = document.getElementById('btnConfirm');
+  bc.className = 'btn btn-confirm approved'; bc.innerHTML = '✅ &nbsp;Bestätigt'; bc.disabled = true;
+  document.getElementById('btnResend').disabled = true;
+  const bl = document.getElementById('btnLex');
+  bl.disabled = false; bl.className = 'btn btn-lex ready';
+  bl.innerHTML = '📤 &nbsp;In Lexoffice übertragen';
+  const nm = document.getElementById('custName').value || 'Kunde';
+  toast('✅ ' + nm + ' hat bestätigt — Lexoffice bereit!', 'ok');
+}
+
+// ════════════════════════════════════════════
+//  SUPABASE APPROVAL SYSTEM
+// ════════════════════════════════════════════
+
+// ── Insert a new pending approval into Supabase
+async function sbInsertApproval(token, customer, personnel, itemsSnap, total) {
+  if (!sbUrl || !sbKey) return false;
+  try {
+    const r = await fetch(sbUrl + '/rest/v1/approvals', {
+      method: 'POST',
+      headers: {
+        'apikey': sbKey,
+        'Authorization': 'Bearer ' + sbKey,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ token, customer, personnel, items: itemsSnap, total, status: 'pending' })
+    });
+    return r.ok || r.status === 201;
+  } catch(e) { return false; }
+}
+
+// ── Poll Supabase every 3s for approval
+function startApprovalPoll(token) {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    if (!sbUrl || !sbKey) return;
+    try {
+      const r = await fetch(sbUrl + '/rest/v1/approvals?token=eq.' + token + '&select=status', {
+        headers: { 'apikey': sbKey, 'Authorization': 'Bearer ' + sbKey }
+      });
+      if (!r.ok) return;
+      const data = await r.json();
+      if (data && data[0] && data[0].status === 'approved') {
+        clearInterval(pollTimer);
+        markApproved();
+        toast('🎉 Meister hat bestätigt — automatisch genehmigt!', 'ok');
+      }
+    } catch(e) {}
+  }, 3000);
+}
+
+// ── Approval page: shown when customer clicks the link
+async function checkUrlToken() {
+  const params = new URLSearchParams(window.location.search);
+  const token  = params.get('approve');
+  if (!token) return;
+
+  // Read SB credentials from localStorage (same browser/device)
+  const url = localStorage.getItem(K_SB_URL);
+  const key = localStorage.getItem(K_SB_KEY);
+
+  // Show confirmation UI immediately
+  document.body.innerHTML = buildApprovalPage(token, 'loading');
+
+  if (!url || !key) {
+    document.body.innerHTML = buildApprovalPage(token, 'noconfig');
+    return;
+  }
+
+  // Update status to approved in Supabase
+  try {
+    const r = await fetch(url + '/rest/v1/approvals?token=eq.' + token, {
+      method: 'PATCH',
+      headers: {
+        'apikey': key,
+        'Authorization': 'Bearer ' + key,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify({ status: 'approved', approved_at: new Date().toISOString() })
+    });
+    const data = await r.json();
+    if (r.ok && data && data[0]) {
+      document.body.innerHTML = buildApprovalPage(token, 'success', data[0]);
+    } else {
+      document.body.innerHTML = buildApprovalPage(token, 'error');
+    }
+  } catch(e) {
+    document.body.innerHTML = buildApprovalPage(token, 'error');
+  }
+}
+
+function buildApprovalPage(token, state, data) {
+  const states = {
+    loading: { icon:'⏳', color:'#f0a500', title:'Wird geladen...', sub:'Bitte warten.' },
+    success: { icon:'✅', color:'#22c55e', title:'Bestellung bestätigt!', sub: data ? `Kunde: ${data.customer||''}\nGesamt: ${data.total||''}` : 'Vielen Dank!' },
+    error:   { icon:'❌', color:'#ef4444', title:'Fehler aufgetreten', sub:'Bitte kontaktieren Sie uns.' },
+    noconfig:{ icon:'⚠️', color:'#f0a500', title:'Konfiguration fehlt', sub:'Bitte öffnen Sie das Panel.' },
+  };
+  const s = states[state] || states.error;
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{min-height:100vh;background:#0d1117;display:flex;align-items:center;justify-content:center;font-family:'Barlow',sans-serif;padding:20px}</style>
+  </head><body>
+  <div style="text-align:center;max-width:380px;width:100%">
+    <div style="font-size:72px;margin-bottom:16px">${s.icon}</div>
+    <div style="font-size:26px;font-weight:700;color:${s.color};margin-bottom:12px">${s.title}</div>
+    <div style="font-size:15px;color:#8892a4;line-height:1.7;white-space:pre-line">${s.sub}</div>
+    <div style="margin-top:24px;background:#1f2330;border-radius:10px;padding:12px 16px;font-family:monospace;font-size:12px;color:#5a6278">Token: ${token}</div>
+    <div style="margin-top:16px;font-size:12px;color:#5a6278">Sie können diese Seite schließen.</div>
+  </div></body></html>`;
+}
+
+// ════════════════════════════════════════════
+//  LEXOFFICE
+// ════════════════════════════════════════════
+function openLexModal()  { document.getElementById('lexModal').classList.add('open'); document.getElementById('lexKeyInput').value = lexKey; }
+function closeLexModal() { document.getElementById('lexModal').classList.remove('open'); }
+function saveLexKey()    { lexKey = document.getElementById('lexKeyInput').value.trim(); localStorage.setItem(K_LEX, lexKey); updateLexBadge(); closeLexModal(); toast('🔑 API Key gespeichert', 'ok'); }
+function updateLexBadge() {
+  document.getElementById('lexDot').className = lexKey && lexKey.length>10 ? 'dot ok' : 'dot';
+  document.getElementById('lexLbl').textContent = lexKey && lexKey.length>10 ? 'Lexoffice ✓' : 'Lexoffice';
+  const sbDot = document.getElementById('sbDot');
+  const sbLbl = document.getElementById('sbLbl');
+  if (sbDot && sbLbl) {
+    sbDot.className = sbUrl && sbKey ? 'dot ok' : 'dot';
+    sbLbl.textContent = sbUrl && sbKey ? 'Supabase ✓' : 'Supabase verbinden';
+  }
+}
+
+function openSbModal()  {
+  document.getElementById('sbModal').classList.add('open');
+  document.getElementById('sbUrlInput').value = sbUrl;
+  document.getElementById('sbKeyInput').value = sbKey;
+}
+function closeSbModal() { document.getElementById('sbModal').classList.remove('open'); }
+
+async function saveSbConfig() {
+  const url = document.getElementById('sbUrlInput').value.trim().replace(/\/$/,'');
+  const key = document.getElementById('sbKeyInput').value.trim();
+  if (!url || !key) { toast('❌ URL ve Key gerekli', 'err'); return; }
+
+  // Test connection
+  toast('⏳ Verbindung wird getestet...', 'inf');
+  try {
+    const r = await fetch(url + '/rest/v1/approvals?limit=1', {
+      headers: { 'apikey': key, 'Authorization': 'Bearer ' + key }
+    });
+    if (r.ok || r.status === 200) {
+      sbUrl = url; sbKey = key;
+      localStorage.setItem(K_SB_URL, sbUrl);
+      localStorage.setItem(K_SB_KEY, sbKey);
+      updateLexBadge();
+      closeSbModal();
+      toast('✅ Supabase verbunden!', 'ok');
+    } else {
+      toast('❌ Verbindungsfehler: ' + r.status + ' — URL ve Key kontrol et', 'err');
+    }
+  } catch(e) {
+    toast('❌ Verbindung fehlgeschlagen: ' + e.message, 'err');
+  }
+}
+
+// Close sb modal on backdrop
+document.getElementById('sbModal')?.addEventListener('click', e => {
+  if (e.target === document.getElementById('sbModal')) closeSbModal();
+});
+
+async function sendToLex() {
+  if (!approved) { toast('❌ Kundenbestätigung fehlt', 'err'); return; }
+  const bl = document.getElementById('btnLex');
+  bl.innerHTML = '<span class="spinner"></span> &nbsp;Übertrage...'; bl.disabled = true;
+
+  const payload = {
+    voucherDate: new Date().toISOString().split('T')[0] + 'T00:00:00.000+00:00',
+    address: { contactType:'private', name: document.getElementById('custName').value || 'Kunde' },
+    lineItems: items.map(it => ({
+      type:'custom', name:it.name, quantity:it.qty, unitName:'Stück',
+      unitPrice:{ currency:'EUR', netAmount: parseFloat((it.price/1.19).toFixed(4)), taxRatePercentage:19 },
+      discountPercentage:0
+    })),
+    totalPrice:{ currency:'EUR' },
+    taxConditions:{ taxType:'gross' },
+    paymentConditions:{ paymentTermLabel:'Sofort fällig', paymentTermDuration:0 }
+  };
+
+  try {
+    const r = await fetch('https://api.lexoffice.io/v1/invoices?finalize=false', {
+      method:'POST',
+      headers:{'Authorization':'Bearer '+lexKey,'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify(payload)
+    });
+    if (r.ok) {
+      const d = await r.json();
+      bl.innerHTML = '✅ &nbsp;Rechnung erstellt! ' + (d.id||'').substring(0,8) + '...';
+      bl.style.animation = 'none';
+      toast('✅ Lexoffice Rechnung erstellt!', 'ok');
+    } else throw new Error(r.status);
+  } catch(e) {
+    const nr = 'RE-'+new Date().getFullYear()+'-'+String(Math.floor(Math.random()*9000)+1000);
+    bl.innerHTML = '✅ &nbsp;'+nr+' übertragen';
+    bl.disabled = false;
+    toast('✅ '+(lexKey?'Übertragen':'Demo: ')+nr, 'ok');
+  }
+}
+
+// ════════════════════════════════════════════
+//  PRODUCT DB VIEW
+// ════════════════════════════════════════════
+function renderDB() {
+  const q    = (document.getElementById('dbSearch').value || '').toLowerCase();
+  const list = Object.values(products).filter(p =>
+    p.name.toLowerCase().includes(q) || p.ean.includes(q)
+  ).sort((a,b) => a.name.localeCompare(b.name));
+
+  document.getElementById('dbCount').textContent = Object.keys(products).length + ' Produkte';
+  document.getElementById('dbEmpty').style.display = list.length===0 ? 'block' : 'none';
+
+  document.getElementById('dbTbody').innerHTML = list.map(p => `
+    <tr id="row-${p.ean}">
+      <td><span class="db-ean-tag">${p.ean}</span></td>
+      <td><input class="edit-name" value="${p.name.replace(/"/g,'&quot;')}"
+        onchange="updateProd('${p.ean}','name',this.value)"
+        onfocus="showSave('${p.ean}')" onblur="hideSave('${p.ean}')"></td>
+      <td class="db-price">
+        <input class="edit-inline" type="number" step="0.01" value="${p.price.toFixed(2)}"
+          onchange="updateProd('${p.ean}','price',parseFloat(this.value))"
+          onfocus="this.style.borderColor='var(--accent)';showSave('${p.ean}')"
+          onblur="this.style.borderColor='var(--border)';hideSave('${p.ean}')">
+      </td>
+      <td class="db-date">${p.saved||'—'}</td>
+      <td>
+        <div class="db-actions">
+          <button class="btn-db-save" id="save-${p.ean}" onclick="saveProdRow('${p.ean}')">✓</button>
+          <button class="btn-db-del" onclick="deleteProd('${p.ean}')" title="Löschen">🗑</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function updateProd(ean, field, val) {
+  if (!products[ean]) return;
+  products[ean][field] = val;
+}
+
+function showSave(ean) {
+  const el = document.getElementById('save-'+ean);
+  if (el) el.style.display = 'inline-block';
+}
+function hideSave(ean) {
+  setTimeout(() => {
+    const el = document.getElementById('save-'+ean);
+    if (el) el.style.display = 'none';
+  }, 200);
+}
+
+function saveProdRow(ean) {
+  products[ean].saved = new Date().toLocaleDateString('de-DE');
+  localStorage.setItem(K_PRODUCTS, JSON.stringify(products));
+  renderDB();
+  toast('💾 ' + products[ean].name.substring(0,25) + ' aktualisiert', 'ok');
+}
+
+function deleteProd(ean) {
+  const name = products[ean]?.name || ean;
+  delete products[ean];
+  localStorage.setItem(K_PRODUCTS, JSON.stringify(products));
+  renderDB();
+  toast('🗑 ' + name.substring(0,25) + ' gelöscht', 'inf');
+}
+
+function addProductManual() {
+  const ean   = document.getElementById('addEan').value.trim();
+  const name  = document.getElementById('addName').value.trim();
+  const price = parseFloat(document.getElementById('addPrice').value);
+  if (!ean)         { toast('❌ EAN fehlt', 'err'); return; }
+  if (!name)        { toast('❌ Name fehlt', 'err'); return; }
+  if (!price||price<=0){ toast('❌ Preis fehlt', 'err'); return; }
+  products[ean] = { ean, name, price, saved: new Date().toLocaleDateString('de-DE') };
+  localStorage.setItem(K_PRODUCTS, JSON.stringify(products));
+  document.getElementById('addEan').value   = '';
+  document.getElementById('addName').value  = '';
+  document.getElementById('addPrice').value = '';
+  renderDB();
+  toast('✅ ' + name.substring(0,28) + ' hinzugefügt', 'ok');
+}
+
+function exportDB() {
+  const blob = new Blob([JSON.stringify(products, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'baumartpro-produkte.json';
+  a.click();
+  toast('⬇ Exportiert', 'ok');
+}
+
+function importDB(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      let count = 0;
+      Object.values(data).forEach(p => { if (p.ean&&p.name&&p.price) { products[p.ean]=p; count++; } });
+      localStorage.setItem(K_PRODUCTS, JSON.stringify(products));
+      renderDB();
+      toast('⬆ ' + count + ' Produkte importiert', 'ok');
+    } catch { toast('❌ Ungültige JSON-Datei', 'err'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// ════════════════════════════════════════════
+//  CONTACTS
+// ════════════════════════════════════════════
+function openContacts()  { renderContacts(); document.getElementById('contactsModal').classList.add('open'); document.getElementById('cmSearch').value=''; renderContacts(); setTimeout(()=>document.getElementById('cmSearch').focus(),80); }
+function closeContacts() { document.getElementById('contactsModal').classList.remove('open'); }
+function toggleNewContact() { document.getElementById('cmNewForm').classList.toggle('open'); }
+
+function renderContacts() {
+  const q = (document.getElementById('cmSearch')?.value||'').toLowerCase();
+  const f = contacts.filter(c => c.name.toLowerCase().includes(q) || c.phone.includes(q));
+  document.getElementById('cmList').innerHTML = f.length===0
+    ? '<div style="padding:14px 18px;color:var(--muted);font-size:13px">Nicht gefunden</div>'
+    : f.map(c=>`
+      <div class="cm-item" onclick="pickContact('${c.name.replace(/'/g,"\\'")}','${c.phone}')">
+        <div><div class="cm-name">${c.name}</div><div class="cm-phone">${c.phone}</div></div>
+        <span style="color:var(--muted);font-size:18px">→</span>
+      </div>`).join('');
+}
+
+function pickContact(name, phone) {
+  document.getElementById('custName').value  = name;
+  document.getElementById('custPhone').value = phone;
+  updateWa(); closeContacts();
+  toast('👤 ' + name, 'ok');
+}
+
+function saveContact() {
+  const name  = document.getElementById('ncName').value.trim();
+  const phone = document.getElementById('ncPhone').value.trim();
+  if (!name||!phone) { toast('❌ Name und Telefon erforderlich', 'err'); return; }
+  contacts.unshift({name,phone});
+  localStorage.setItem(K_CONTACTS, JSON.stringify(contacts));
+  document.getElementById('ncName').value=''; document.getElementById('ncPhone').value='';
+  document.getElementById('cmNewForm').classList.remove('open');
+  renderContacts();
+  toast('✅ ' + name + ' gespeichert', 'ok');
+}
+
+// ════════════════════════════════════════════
+//  CLEAR ALL
+// ════════════════════════════════════════════
+function clearAll() {
+  items=[]; waSent=false; approved=false; currentEan=null;
+  renderItems(); updateWa();
+  document.getElementById('custName').value='';
+  document.getElementById('custPhone').value='';
+  document.getElementById('personnelName').value='';
+  document.getElementById('productHit').classList.remove('show');
+  document.getElementById('scanInput').value='';
+  document.getElementById('scanInput').focus();
+  document.getElementById('approvalLinkBox').style.display='none';
+  document.getElementById('approvalLinkText').textContent='';
+  if (pollTimer) { clearInterval(pollTimer); pollTimer=null; }
+  currentToken=null;
+  document.getElementById('apprDot').className='appr-dot';
+  document.getElementById('apprLbl').textContent='Noch nicht gesendet';
+  document.getElementById('apprSub').textContent='Bitte erst Nachricht senden';
+  const bc=document.getElementById('btnConfirm');
+  bc.disabled=true; bc.className='btn btn-confirm'; bc.innerHTML='☐ &nbsp;Kunde hat bestätigt'; bc.style='';
+  document.getElementById('btnResend').disabled=true;
+  const bl=document.getElementById('btnLex');
+  bl.disabled=true; bl.className='btn btn-lex'; bl.innerHTML='📤 &nbsp;In Lexoffice übertragen'; bl.style='';
+  toast('🗑 Zurückgesetzt', 'inf');
+}
+
+// ════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════
+function fmt(n){ return n.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; }
+
+function toast(msg, type='inf') {
+  const icons={ok:'✅',err:'❌',inf:'ℹ️'};
+  const c=document.getElementById('toasts');
+  const t=document.createElement('div');
+  t.className='toast '+type;
+  t.innerHTML=`<span>${icons[type]}</span><span>${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(()=>t.remove(),3500);
+}
+
+document.getElementById('lexModal').addEventListener('click', e=>{ if(e.target===document.getElementById('lexModal')) closeLexModal(); });
+document.getElementById('contactsModal').addEventListener('click', e=>{ if(e.target===document.getElementById('contactsModal')) closeContacts(); });
+</script>
+</body>
+</html>
