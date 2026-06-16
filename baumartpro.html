@@ -459,8 +459,8 @@ table.dbtbl tr:hover td{background:rgba(255,255,255,.02)}
 <!-- LEXOFFICE MODAL -->
 <div class="modal-ov" id="lexModal">
   <div class="modal">
-    <div class="modal-title">⚙️ Lexoffice API</div>
-    <div class="modal-sub">API Key unter Lexoffice → Einstellungen → API Zugänge.</div>
+    <div class="modal-title">⚙️ Lexware API</div>
+    <div class="modal-sub">API Key unter Lexware → Erweiterungen → Public API.</div>
     <div class="field">
       <label>API Key</label>
       <input class="finput" id="lexKeyInput" type="password" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
@@ -544,7 +544,7 @@ let contacts = JSON.parse(localStorage.getItem(K_CONTACTS) || 'null') || [
   { name:'Petra Schulz',    phone:'+4917045678901' },
 ];
 
-let lexKey   = localStorage.getItem(K_LEX) || '';
+let lexKey   = localStorage.getItem(K_LEX) || 'g1FDchjBUIFJfLqEM6KRjjXFToavEuYf.CWBnCdpgUYfxUDp';
 let sbUrl    = localStorage.getItem(K_SB_URL) || 'https://lhjqaldayrsjmeczidrx.supabase.co';
 let sbKey    = localStorage.getItem(K_SB_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxoanFhbGRheXJzam1lY3ppZHJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2MDAwNTYsImV4cCI6MjA5NzE3NjA1Nn0.b5Ug3I6HQcPzFBXEpq4k6aGw1H8IjfTA3osUO1LGQFE';
 let items    = [];
@@ -569,6 +569,8 @@ let demoIdx = 0;
 //  INIT
 // ════════════════════════════════════════════
 window.onload = () => {
+  if (!localStorage.getItem(K_LEX)) localStorage.setItem(K_LEX, 'g1FDchjBUIFJfLqEM6KRjjXFToavEuYf.CWBnCdpgUYfxUDp');
+  lexKey = localStorage.getItem(K_LEX);
   if (!localStorage.getItem(K_SB_URL)) localStorage.setItem(K_SB_URL, 'https://lhjqaldayrsjmeczidrx.supabase.co');
   if (!localStorage.getItem(K_SB_KEY)) localStorage.setItem(K_SB_KEY, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxoanFhbGRheXJzam1lY3ppZHJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2MDAwNTYsImV4cCI6MjA5NzE3NjA1Nn0.b5Ug3I6HQcPzFBXEpq4k6aGw1H8IjfTA3osUO1LGQFE');
   sbUrl = localStorage.getItem(K_SB_URL);
@@ -963,7 +965,7 @@ function closeLexModal() { document.getElementById('lexModal').classList.remove(
 function saveLexKey()    { lexKey = document.getElementById('lexKeyInput').value.trim(); localStorage.setItem(K_LEX, lexKey); updateLexBadge(); closeLexModal(); toast('🔑 API Key gespeichert', 'ok'); }
 function updateLexBadge() {
   document.getElementById('lexDot').className = lexKey && lexKey.length>10 ? 'dot ok' : 'dot';
-  document.getElementById('lexLbl').textContent = lexKey && lexKey.length>10 ? 'Lexoffice ✓' : 'Lexoffice';
+  document.getElementById('lexLbl').textContent = lexKey && lexKey.length>10 ? 'Lexware ✓' : 'Lexware verbinden';
   const sbDot = document.getElementById('sbDot');
   const sbLbl = document.getElementById('sbLbl');
   if (sbDot && sbLbl) {
@@ -1029,7 +1031,7 @@ async function sendToLex() {
   };
 
   try {
-    const r = await fetch('https://api.lexoffice.io/v1/invoices?finalize=false', {
+    const r = await fetch('https://api.lexware.io/v1/invoices?finalize=false', {
       method:'POST',
       headers:{'Authorization':'Bearer '+lexKey,'Content-Type':'application/json','Accept':'application/json'},
       body:JSON.stringify(payload)
